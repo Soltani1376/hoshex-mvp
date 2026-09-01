@@ -48,6 +48,7 @@
     appendStylesheet("/assets/hoshex-completion.css", "v2-completion-pass");
     appendStylesheet("/assets/hoshex-app-shell-v5.css", "v2-app-shell-v5");
     appendStylesheet("/assets/hoshex-app-shell-v5-mobile.css", "v2-app-shell-v5-mobile");
+    appendStylesheet("/assets/hoshex-cloud.css", "v2-cloud");
   }
 
   function installBrandAssets() {
@@ -205,5 +206,6 @@
   appendScript("/assets/hoshex-journey-hook.js", "v2-persistent-journey-hook");
   appendScript("/assets/hoshex-execution.js", "v2-execution-assistant");
   appendScript("/assets/hoshex-app-shell-v5.js", "v2-app-shell-v5");
-  hxTrack("page_view", { version: "v2", hero: "diagnostic-v3", journey: "persistent-v1", execution: "assistant-v2-context", completion: "v1", shell: "compact-app-v5", calendar: "persian" });
+  appendScript("/assets/hoshex-cloud.js", "v2-cloud");
+  hxTrack("page_view", { version: "v2", hero: "diagnostic-v3", journey: "persistent-v1", execution: "assistant-v2-context", completion: "v1", shell: "compact-app-v5", calendar: "persian", cloud: "v1" });
 })();
