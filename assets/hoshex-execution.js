@@ -40,13 +40,20 @@
   }
 
   function formatDate(value) {
+    if (!value) return "بعد از اجرا";
     var date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "به‌زودی";
+    if (Number.isNaN(date.getTime())) return "بعد از اجرا";
     try {
       return new Intl.DateTimeFormat("fa-IR-u-ca-gregory", { day: "numeric", month: "long" }).format(date);
     } catch (error) {
       return date.toISOString().slice(0, 10);
     }
+  }
+
+  function checkinLabel(execution) {
+    if (!execution) return "";
+    if (execution.checkInAt) return formatDate(execution.checkInAt);
+    return Math.max(1, Math.min(7, Number(execution.check_in_days) || 2)) + " روز بعد از اجرا";
   }
 
   function copyText(value) {
@@ -98,10 +105,11 @@
     var target = document.getElementById("execution-content");
     if (!target || !cycle || !cycle.execution) return false;
     var execution = cycle.execution;
+    var executed = Boolean(execution.executedAt);
     target.innerHTML = [
       '<div class="hx-execution-head">',
         '<div><p class="hx-kicker">Execution Assistant · قدم ' + esc(journey.cycles.length) + '</p><h2 id="execution-title">' + esc(execution.execution_title || "خروجی آماده") + '</h2><p>هوشکس این بخش از کار را آماده کرده؛ تو فقط اجرا و نتیجه را ثبت کن.</p></div>',
-        '<span class="hx-execution-ready">آماده اجرا</span>',
+        '<span class="hx-execution-ready">' + (executed ? 'اجرا ثبت شد' : 'آماده اجرا') + '</span>',
       '</div>',
       '<div class="hx-execution-context"><span>کار فعلی</span><strong>' + esc(cycle.action && cycle.action.title || "") + '</strong></div>',
       '<article class="hx-artifact-card">',
@@ -109,10 +117,10 @@
         '<pre class="hx-artifact-text" id="execution-artifact">' + esc(execution.artifact || "") + '</pre>',
         '<div class="hx-artifact-hint"><strong>نحوه استفاده:</strong> ' + esc(execution.usage_hint || "همین نسخه را اجرا کن.") + '</div>',
       '</article>',
-      '<div class="hx-checkin-card"><div><span>زمان بررسی نتیجه</span><strong>' + esc(formatDate(execution.checkInAt)) + '</strong></div><p>بعد از اجرا، تا این تاریخ به معیار «' + esc(cycle.metric && cycle.metric.metric || "نتیجه") + '» نگاه کن و برگرد نتیجه را ثبت کن.</p></div>',
+      '<div class="hx-checkin-card"><div><span>زمان بررسی نتیجه</span><strong>' + esc(checkinLabel(execution)) + '</strong></div><p>' + (executed ? 'تا این تاریخ' : 'بعد از اجرا') + ' به معیار «' + esc(cycle.metric && cycle.metric.metric || "نتیجه") + '» نگاه کن و برگرد نتیجه را ثبت کن.</p></div>',
       '<div class="hx-execution-actions">',
         '<button class="hx-primary" type="button" data-execution-action="copy">کپی خروجی</button>',
-        '<button class="hx-secondary" type="button" data-execution-action="executed">اجراش کردم ✓</button>',
+        '<button class="hx-secondary" type="button" data-execution-action="executed"' + (executed ? ' disabled' : '') + '>' + (executed ? 'اجرا ثبت شد ✓' : 'اجراش کردم ✓') + '</button>',
         '<button class="hx-back" type="button" data-execution-action="journey">بازگشت به مسیر</button>',
       '</div>'
     ].join("");
@@ -127,7 +135,7 @@
       artifact: String(result.artifact || ""),
       usage_hint: String(result.usage_hint || ""),
       check_in_days: days,
-      checkInAt: addDays(days),
+      checkInAt: "",
       createdAt: now(),
       source: source || "api"
     };
@@ -220,18 +228,22 @@
   function markExecuted() {
     var journey = readJourney();
     var cycle = currentCycle(journey);
-    if (!journey || !cycle || !cycle.execution) return;
-    cycle.execution.executedAt = cycle.execution.executedAt || now();
+    if (!journey || !cycle || !cycle.execution || cycle.execution.executedAt) return;
+    cycle.execution.executedAt = now();
+    cycle.execution.checkInAt = addDays(cycle.execution.check_in_days);
     writeJourney(journey);
     if (window.hxJourneyMarkDone) window.hxJourneyMarkDone();
+    journey = readJourney();
+    cycle = currentCycle(journey);
     if (window.hxTrack) window.hxTrack("execution_completed", { diagnosis_key: cycle.diagnosisKey, execution_type: cycle.execution.execution_type, check_in_at: cycle.execution.checkInAt });
-    renderExecution(readJourney(), currentCycle(readJourney()));
+    renderExecution(journey, cycle);
+    injectEverywhere();
     if (window.hxShowToast) window.hxShowToast("اجرا ثبت شد؛ موعد بررسی نتیجه ذخیره شد.");
   }
 
   function journeyCheckinHtml(cycle) {
     if (!cycle || !cycle.execution) return "";
-    return '<div class="hx-inline-execution-status"><span>خروجی آماده</span><strong>' + esc(cycle.execution.execution_title || "Execution") + '</strong><small>بررسی نتیجه: ' + esc(formatDate(cycle.execution.checkInAt)) + '</small></div>';
+    return '<div class="hx-inline-execution-status"><span>خروجی آماده</span><strong>' + esc(cycle.execution.execution_title || "Execution") + '</strong><small>بررسی نتیجه: ' + esc(checkinLabel(cycle.execution)) + '</small></div>';
   }
 
   function injectJourney() {
@@ -257,6 +269,8 @@
       status.innerHTML = journeyCheckinHtml(cycle);
       var metric = plan.querySelector(".hx-plan-metric");
       if (metric) metric.insertAdjacentElement("afterend", status);
+    } else if (cycle.execution && existing) {
+      existing.innerHTML = journeyCheckinHtml(cycle);
     }
   }
 
