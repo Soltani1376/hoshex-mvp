@@ -3,7 +3,7 @@ const path = require("path");
 const vm = require("vm");
 
 const root = path.resolve(__dirname, "..");
-const executionPath = path.join(root, "api", "execute.js");
+const executionPath = path.join(root, "api", "execute-context.js");
 let source = fs.readFileSync(executionPath, "utf8");
 source = source.replace("export default async function handler", "async function handler");
 source += "\nmodule.exports = { makeExecution, normalizedInput, validExecution };\n";
@@ -19,23 +19,24 @@ const sandbox = {
   clearTimeout
 };
 vm.createContext(sandbox);
-vm.runInContext(source, sandbox, { filename: "api/execute.js" });
+vm.runInContext(source, sandbox, { filename: "api/execute-context.js" });
 const { makeExecution, normalizedInput, validExecution } = sandbox.module.exports;
 if (typeof makeExecution !== "function" || typeof normalizedInput !== "function" || typeof validExecution !== "function") throw new Error("execution brain is not testable");
 
 const cases = [
-  ["acquisition", "content_cta"],
-  ["offer", "offer_copy"],
-  ["sales_process", "sales_reply"],
-  ["focus", "focus_plan"]
+  ["acquisition", "content_cta", { pain: "پیدا کردن هدیه خاص سخت است", cta: "dm" }, "هدیه خاص"],
+  ["offer", "offer_copy", { subject: "کیف چرمی مدل X", audience: "خانم‌های شاغل که کیف سبک می‌خواهند", cta: "website" }, "کیف چرمی مدل X"],
+  ["sales_process", "sales_reply", { objection: "مطمئن نیست کیفیت خوب باشد", proof: "هفت روز امکان مرجوعی داریم" }, "هفت روز امکان مرجوعی"],
+  ["focus", "focus_plan", { outcome: "۵ سفارش واقعی", available_time: "60" }, "۵ سفارش واقعی"]
 ];
 let failures = 0;
 
-for (const [key, type] of cases) {
+for (const [key, type, executionContext, expectedText] of cases) {
   const input = normalizedInput({
-    profile: { businessName: "فروشگاه تست", offer: "محصول تست", channel: "instagram" },
+    profile: { businessName: "فروشگاه تست", offer: "محصول تست" },
     diagnosisKey: key,
     cycleNumber: 1,
+    executionContext,
     currentPlan: {
       summary: "خلاصه مسیر",
       priority: { title: "اولویت تست", description: "توضیح تست" },
@@ -49,6 +50,7 @@ for (const [key, type] of cases) {
     [result.execution_type === type, `execution type should be ${type}`],
     [Boolean(result.execution_title), "must include title"],
     [typeof result.artifact === "string" && result.artifact.length >= 80, "artifact must be copy-ready and substantive"],
+    [result.artifact.includes(expectedText), "artifact must use the user's execution context"],
     [Boolean(result.usage_hint), "must include usage hint"],
     [Number(result.check_in_days) >= 1 && Number(result.check_in_days) <= 7, "check-in must be 1-7 days"],
     [!Array.isArray(result.artifact), "must return one artifact, not a list"]
@@ -63,7 +65,7 @@ for (const [key, type] of cases) {
   }
 }
 
-for (const relative of ["assets/hoshex-execution.js", "assets/analytics.js"]) {
+for (const relative of ["assets/hoshex-execution.js", "assets/hoshex-completion.js", "assets/hoshex-result.js", "assets/hoshex-journey-hook.js", "assets/analytics.js"]) {
   const code = fs.readFileSync(path.join(root, relative), "utf8");
   try {
     new Function(code);
@@ -74,26 +76,47 @@ for (const relative of ["assets/hoshex-execution.js", "assets/analytics.js"]) {
   }
 }
 
-const css = fs.readFileSync(path.join(root, "assets/hoshex-execution.css"), "utf8");
-for (const selector of [".hx-artifact-card", ".hx-checkin-card", ".hx-result-execute", ".hx-inline-execution-status"]) {
-  if (!css.includes(selector)) {
+const executionCss = fs.readFileSync(path.join(root, "assets/hoshex-execution.css"), "utf8");
+for (const selector of [".hx-artifact-card", ".hx-checkin-card", ".hx-inline-execution-status"]) {
+  if (!executionCss.includes(selector)) {
     failures += 1;
     console.error(`FAIL execution CSS contract: missing ${selector}`);
   }
 }
 if (!failures) console.log("PASS execution CSS contract");
 
+const completionCss = fs.readFileSync(path.join(root, "assets/hoshex-completion.css"), "utf8");
+for (const selector of [".hx-decision-shell", ".hx-execution-context-step", ".hx-active-home", ".hx-business-snapshot", ".hx-path-progress"]) {
+  if (!completionCss.includes(selector)) {
+    failures += 1;
+    console.error(`FAIL completion CSS contract: missing ${selector}`);
+  }
+}
+
 const analytics = fs.readFileSync(path.join(root, "assets/analytics.js"), "utf8");
-if (!analytics.includes("/assets/hoshex-execution.js") || !analytics.includes("/assets/hoshex-execution.css")) {
+for (const asset of ["/assets/hoshex-execution.js", "/assets/hoshex-execution.css", "/assets/hoshex-completion.js", "/assets/hoshex-completion.css"]) {
+  if (!analytics.includes(asset)) {
+    failures += 1;
+    console.error(`FAIL analytics loader missing ${asset}`);
+  }
+}
+
+const result = fs.readFileSync(path.join(root, "assets/hoshex-result.js"), "utf8");
+const primaryCards = ["hx-decision-diagnosis", "hx-decision-priority", "hx-decision-action"];
+for (const card of primaryCards) {
+  if (!result.includes(card)) {
+    failures += 1;
+    console.error(`FAIL simplified result missing ${card}`);
+  }
+}
+if (result.includes("hx-card-index\">۴") || result.includes("hx-card-index\">۵") || result.includes("hx-card-index\">۶")) {
   failures += 1;
-  console.error("FAIL execution assets are not loaded by analytics.js");
-} else {
-  console.log("PASS execution assets loaded");
+  console.error("FAIL result still exposes the old six-card hierarchy");
 }
 
 if (failures) {
-  console.error(`\n${failures} execution assistant check(s) failed.`);
+  console.error(`\n${failures} completion/execution check(s) failed.`);
   process.exitCode = 1;
 } else {
-  console.log("\nAll execution assistant checks passed.");
+  console.log("\nAll completion and context-aware execution checks passed.");
 }
