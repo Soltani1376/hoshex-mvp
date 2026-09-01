@@ -1,0 +1,6 @@
+/* Hoshex V2.5 mobile shell correction */
+@media (max-width: 620px) {
+  .hx-shell {
+    width: calc(100% - 16px) !important;
+  }
+}
