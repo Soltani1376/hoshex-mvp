@@ -21,3 +21,5 @@ jobs:
         run: node tests/run-v2-tests.cjs
       - name: Run recurring journey tests
         run: node tests/run-followup-tests.cjs
+      - name: Run execution assistant tests
+        run: node tests/run-execution-tests.cjs
