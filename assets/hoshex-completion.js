@@ -133,6 +133,13 @@
     return { label: "این کار رو برام آماده کن ←", action: "prepare" };
   }
 
+  function formatDate(value) {
+    var date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "بعد از اجرا";
+    try { return new Intl.DateTimeFormat("fa-IR-u-ca-gregory", { day: "numeric", month: "long" }).format(date); }
+    catch (error) { return date.toISOString().slice(0, 10); }
+  }
+
   function renderActiveHome() {
     var landing = document.getElementById("screen-landing");
     if (!landing) return;
@@ -162,6 +169,9 @@
     var action = primaryAction(cycle);
     var status = cycle.status === "done" ? "منتظر نتیجه" : cycle.execution && cycle.execution.executedAt ? "اجرا ثبت شده" : cycle.execution ? "خروجی آماده" : "در حال اجرا";
     var checkin = cycle.execution && cycle.execution.checkInAt ? formatDate(cycle.execution.checkInAt) : "بعد از اجرا";
+    var signature = [journey.updatedAt, cycle.id, cycle.status, cycle.updatedAt, cycle.execution && cycle.execution.updatedAt, cycle.execution && cycle.execution.executedAt, cycle.execution && cycle.execution.checkInAt, action.action].join("|");
+    if (existing.getAttribute("data-hx-signature") === signature) return;
+    existing.setAttribute("data-hx-signature", signature);
 
     existing.innerHTML = [
       '<div class="hx-active-home-head">',
@@ -183,13 +193,6 @@
     ].join("");
   }
 
-  function formatDate(value) {
-    var date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "بعد از اجرا";
-    try { return new Intl.DateTimeFormat("fa-IR-u-ca-gregory", { day: "numeric", month: "long" }).format(date); }
-    catch (error) { return date.toISOString().slice(0, 10); }
-  }
-
   function enhanceJourney() {
     var target = document.getElementById("journey-content");
     if (!target || !target.children.length) return;
@@ -209,6 +212,9 @@
 
     var business = journey.profile && journey.profile.businessName || "کسب‌وکارت";
     var answers = journey.answers || {};
+    var signature = [journey.updatedAt, cycle.id, cycle.status, cycle.updatedAt, cycle.execution && cycle.execution.executedAt, cycle.execution && cycle.execution.checkInAt].join("|");
+    if (old.getAttribute("data-hx-signature") === signature) return;
+    old.setAttribute("data-hx-signature", signature);
     old.innerHTML = [
       '<div class="hx-business-snapshot hx-business-snapshot-compact">',
         '<div class="hx-snapshot-name"><span>BUSINESS SNAPSHOT</span><strong>' + esc(business) + '</strong><small>' + esc(journey.profile && journey.profile.offer || "") + '</small></div>',
