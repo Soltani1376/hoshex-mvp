@@ -47,6 +47,7 @@
     appendStylesheet("/assets/hoshex-execution.css", "v2-execution-assistant");
     appendStylesheet("/assets/hoshex-completion.css", "v2-completion-pass");
     appendStylesheet("/assets/hoshex-app-shell-v5.css", "v2-app-shell-v5");
+    appendStylesheet("/assets/hoshex-app-shell-v5-mobile.css", "v2-app-shell-v5-mobile");
   }
 
   function installBrandAssets() {
