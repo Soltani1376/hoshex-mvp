@@ -4,6 +4,7 @@ const path = require("path");
 const root = path.resolve(__dirname, "..");
 const jsPath = path.join(root, "assets", "hoshex-app-shell-v5.js");
 const cssPath = path.join(root, "assets", "hoshex-app-shell-v5.css");
+const mobileCssPath = path.join(root, "assets", "hoshex-app-shell-v5-mobile.css");
 const analyticsPath = path.join(root, "assets", "analytics.js");
 
 let failures = 0;
@@ -18,6 +19,7 @@ function check(ok, message) {
 
 const js = fs.readFileSync(jsPath, "utf8");
 const css = fs.readFileSync(cssPath, "utf8");
+const mobileCss = fs.readFileSync(mobileCssPath, "utf8");
 const analytics = fs.readFileSync(analyticsPath, "utf8");
 
 try {
@@ -52,10 +54,13 @@ for (const selector of [
 check(css.includes("width: min(820px, 100%)"), "returning-user home is capped to compact app width");
 check(css.includes("min-height: 43px"), "primary controls use compact height");
 check(css.includes("box-shadow: none !important"), "major cards remove heavy shadows");
+check(mobileCss.includes("width: calc(100% - 16px) !important"), "mobile shell uses valid compact calc width");
 
 check(analytics.includes('/assets/hoshex-app-shell-v5.css'), "analytics loader includes compact app CSS");
+check(analytics.includes('/assets/hoshex-app-shell-v5-mobile.css'), "analytics loader includes compact mobile correction");
 check(analytics.includes('/assets/hoshex-app-shell-v5.js'), "analytics loader includes compact app JS");
 check(analytics.indexOf('/assets/hoshex-app-shell-v5.css') > analytics.indexOf('/assets/hoshex-completion.css'), "compact CSS loads after completion CSS");
+check(analytics.indexOf('/assets/hoshex-app-shell-v5-mobile.css') > analytics.indexOf('/assets/hoshex-app-shell-v5.css'), "mobile correction loads after compact CSS");
 check(analytics.indexOf('/assets/hoshex-app-shell-v5.js') > analytics.indexOf('/assets/hoshex-execution.js'), "app shell JS loads after execution JS");
 
 if (failures) {
