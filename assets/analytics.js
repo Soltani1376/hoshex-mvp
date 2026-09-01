@@ -13,6 +13,15 @@
     document.head.appendChild(link);
   }
 
+  function appendScript(src, key) {
+    if (document.querySelector('script[data-hx-script="' + key + '"]')) return;
+    var script = document.createElement("script");
+    script.src = src;
+    script.async = false;
+    script.setAttribute("data-hx-script", key);
+    document.head.appendChild(script);
+  }
+
   function installVisualTheme() {
     if (!document.querySelector('link[data-hx-font-preconnect="googleapis"]')) {
       var googleApis = document.createElement("link");
@@ -186,5 +195,6 @@
   installVisualTheme();
   installBrandAssets();
   installDiagnosticHero();
-  hxTrack("page_view", { version: "v2", hero: "diagnostic-v3" });
+  appendScript("/assets/hoshex-journey.js", "v2-persistent-journey");
+  hxTrack("page_view", { version: "v2", hero: "diagnostic-v3", journey: "persistent-v1" });
 })();
