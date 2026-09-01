@@ -44,6 +44,7 @@
     appendStylesheet("/assets/hoshex-hero-v3.css", "v2-hero-diagnostic");
     appendStylesheet("/assets/hoshex-journey.css", "v2-persistent-journey");
     appendStylesheet("/assets/hoshex-polish-v4.css", "v2-proportion-minimal-motion");
+    appendStylesheet("/assets/hoshex-execution.css", "v2-execution-assistant");
   }
 
   function installBrandAssets() {
@@ -198,5 +199,6 @@
   installDiagnosticHero();
   appendScript("/assets/hoshex-journey.js", "v2-persistent-journey");
   appendScript("/assets/hoshex-journey-hook.js", "v2-persistent-journey-hook");
-  hxTrack("page_view", { version: "v2", hero: "diagnostic-v3", journey: "persistent-v1" });
+  appendScript("/assets/hoshex-execution.js", "v2-execution-assistant");
+  hxTrack("page_view", { version: "v2", hero: "diagnostic-v3", journey: "persistent-v1", execution: "assistant-v1" });
 })();
