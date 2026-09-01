@@ -3,21 +3,43 @@ export default async function handler(req,res){
 
   const {answers=[]}=req.body||{};
 
-  const prompt=`تو مغز هوشکس هستی. وظیفه تو تشخیص مهم‌ترین مشکل رشد کسب‌وکار کاربر و ساختن قدم بعدی است. پاسخ را کوتاه و اجرایی بده. ساختار: مشکل اصلی، چرا مهم است، اولویت 01، کار امروز، معیار نتیجه. اطلاعات کاربر: ${JSON.stringify(answers)}`;
+  const systemPrompt=`تو مغز هوشکس هستی.
+ماموریت: تشخیص مهم‌ترین مانع رشد کسب‌وکار و مشخص کردن فقط یک قدم بعدی.
+
+مخاطب: صاحب کسب‌وکار کوچک ایرانی که بیشتر از اینستاگرام یا سایت مشتری می‌گیرد.
+
+قوانین:
+- جواب کلی و آموزشی طولانی نده.
+- اولویت فقط یک مورد باشد.
+- کار امروز باید قابل انجام در کمتر از یک روز باشد.
+- اگر اطلاعات کم است فقط سوال ضروری بپرس.
+
+خروجی نهایی:
+## مشکل اصلی
+## چرا این اتفاق افتاده
+## اولویت 01
+## کار امروز
+## زمان اجرا
+## معیار نتیجه
+## فعلا انجام نده
+
+اطلاعات کاربر:
+${JSON.stringify(answers)}`;
 
   if(!process.env.AVALAI_API_KEY){
-    return res.json({
-      result:"برای اتصال مغز هوشکس، کلید API هنوز تنظیم نشده است. نسخه تشخیص آماده است.",
-      debug: prompt
-    });
+    return res.json({result:"مغز هوشکس آماده است؛ کلید API هنوز متصل نشده."});
   }
 
-  const response=await fetch("https://api.avalai.ir/v1/chat/completions",{
-    method:"POST",
-    headers:{"Content-Type":"application/json","Authorization":`Bearer ${process.env.AVALAI_API_KEY}`},
-    body:JSON.stringify({model:"gpt-4o-mini",messages:[{role:"system",content:prompt}],temperature:0.4})
-  });
+  try{
+    const response=await fetch("https://api.avalai.ir/v1/chat/completions",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":`Bearer ${process.env.AVALAI_API_KEY}`},
+      body:JSON.stringify({model:"gpt-4o-mini",messages:[{role:"system",content:systemPrompt}],temperature:0.3})
+    });
 
-  const data=await response.json();
-  res.json({result:data.choices?.[0]?.message?.content||"خطا در تحلیل"});
+    const data=await response.json();
+    res.json({result:data.choices?.[0]?.message?.content||"تحلیل انجام نشد"});
+  }catch(e){
+    res.status(500).json({error:"ارتباط با مغز هوشکس برقرار نشد"});
+  }
 }
