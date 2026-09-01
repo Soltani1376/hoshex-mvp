@@ -19,3 +19,5 @@ jobs:
           node-version: 22
       - name: Run V2 diagnosis tests
         run: node tests/run-v2-tests.cjs
+      - name: Run recurring journey tests
+        run: node tests/run-followup-tests.cjs
