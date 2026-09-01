@@ -4,6 +4,36 @@
   var STORAGE_KEY = "hx_events_v2";
   var MAX_EVENTS = 250;
 
+  function installBrandAssets() {
+    var logoPath = "/assets/hoshex-logo-icon.png";
+    var mark = document.querySelector(".hx-brand-mark");
+    if (mark) {
+      mark.textContent = "";
+      mark.style.background = "transparent";
+      mark.style.boxShadow = "none";
+      mark.style.overflow = "hidden";
+      var image = document.createElement("img");
+      image.src = logoPath;
+      image.alt = "";
+      image.width = 30;
+      image.height = 30;
+      image.style.width = "100%";
+      image.style.height = "100%";
+      image.style.display = "block";
+      image.style.objectFit = "contain";
+      mark.appendChild(image);
+    }
+
+    if (!document.querySelector('link[data-hx-favicon]')) {
+      var favicon = document.createElement("link");
+      favicon.rel = "icon";
+      favicon.type = "image/png";
+      favicon.href = logoPath;
+      favicon.setAttribute("data-hx-favicon", "true");
+      document.head.appendChild(favicon);
+    }
+  }
+
   function clean(value, depth) {
     depth = depth || 0;
     if (depth > 2) return undefined;
@@ -59,5 +89,6 @@
 
   window.hxTrack = hxTrack;
   window.hxGetEvents = readEvents;
+  installBrandAssets();
   hxTrack("page_view", { version: "v2" });
 })();
