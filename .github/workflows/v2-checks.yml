@@ -23,3 +23,5 @@ jobs:
         run: node tests/run-followup-tests.cjs
       - name: Run execution assistant tests
         run: node tests/run-execution-tests.cjs
+      - name: Run compact app shell and Jalali tests
+        run: node tests/run-app-shell-tests.cjs
