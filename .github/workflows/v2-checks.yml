@@ -1,0 +1,21 @@
+name: Hoshex V2 checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - codex/**
+
+jobs:
+  diagnosis-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run V2 diagnosis tests
+        run: node tests/run-v2-tests.cjs
