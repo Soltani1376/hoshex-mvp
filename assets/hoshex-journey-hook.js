@@ -25,12 +25,14 @@
       var source = context && context.source || "api";
       window.hxCurrentResultKind = source === "demo" ? "demo" : "diagnosis";
       if (source !== "demo" && input && typeof input === "object") {
+        var request = window.hxLastDiagnosisRequest && typeof window.hxLastDiagnosisRequest === "object" ? window.hxLastDiagnosisRequest : {};
         var payload = {
-          sessionId: "hx-result-" + Date.now().toString(36),
-          profile: readProfile(),
+          sessionId: String(request.sessionId || "hx-result-" + Date.now().toString(36)),
+          profile: request.profile && typeof request.profile === "object" ? request.profile : readProfile(),
+          answers: request.answers && typeof request.answers === "object" ? request.answers : {},
           diagnosis: input,
           source: source,
-          meta: {}
+          meta: window.hxLastDiagnosisMeta && typeof window.hxLastDiagnosisMeta === "object" ? window.hxLastDiagnosisMeta : {}
         };
         if (window.hxJourneySaveDiagnosis) window.hxJourneySaveDiagnosis(payload);
         else window.hxPendingJourneyDiagnosis = payload;

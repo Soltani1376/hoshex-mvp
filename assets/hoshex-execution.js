@@ -31,6 +31,7 @@
     if (!journey) return;
     journey.updatedAt = now();
     try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(journey)); } catch (error) {}
+    if (window.hxCompletionRefresh) window.hxCompletionRefresh();
   }
 
   function addDays(days) {
@@ -43,11 +44,8 @@
     if (!value) return "بعد از اجرا";
     var date = new Date(value);
     if (Number.isNaN(date.getTime())) return "بعد از اجرا";
-    try {
-      return new Intl.DateTimeFormat("fa-IR-u-ca-gregory", { day: "numeric", month: "long" }).format(date);
-    } catch (error) {
-      return date.toISOString().slice(0, 10);
-    }
+    try { return new Intl.DateTimeFormat("fa-IR-u-ca-gregory", { day: "numeric", month: "long" }).format(date); }
+    catch (error) { return date.toISOString().slice(0, 10); }
   }
 
   function checkinLabel(execution) {
@@ -87,6 +85,99 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function contextSchema(key, journey, cycle) {
+    var offer = journey && journey.profile && journey.profile.offer || "";
+    if (key === "acquisition") return {
+      badge: "برای ساخت متن جذب",
+      title: "دو جزئیات بده تا متن واقعاً برای مخاطب تو ساخته بشه.",
+      subtitle: "این‌ها فقط برای همین خروجی استفاده می‌شوند؛ قرار نیست فرم تازه‌ای شروع کنیم.",
+      fields: [
+        { key: "pain", type: "textarea", label: "مخاطبی که می‌خواهی جذب کنی الان دقیقاً چه مشکلی دارد؟", placeholder: "مثلاً دنبال هدیه خاصه ولی بین گزینه‌ها گیج می‌شه", hint: "یک مشکل واقعی و مشخص کافی است.", required: true },
+        { key: "cta", type: "select", label: "قدم بعدی مخاطب کجا باشد؟", required: true, options: [["dm", "دایرکت"], ["website", "لینک سایت"], ["whatsapp", "واتساپ"]] }
+      ]
+    };
+    if (key === "sales_process") return {
+      badge: "برای ساخت پاسخ فروش",
+      title: "تردید واقعی مشتری رو بده؛ نه حدس ما رو.",
+      subtitle: "با همین دو داده، پاسخ آماده‌ای می‌سازیم که بتوانی در گفت‌وگوی بعدی استفاده کنی.",
+      fields: [
+        { key: "objection", type: "textarea", label: "پرتکرارترین سؤال یا تردید مشتری چیست؟", placeholder: "مثلاً می‌گه گرونه / مطمئن نیست کیفیتش خوب باشه", required: true },
+        { key: "proof", type: "input", label: "چه دلیل اعتماد واقعی داری؟", placeholder: "مثلاً ضمانت، نمونه مشتری، تجربه، امکان مرجوعی", hint: "اگر مدرک خاصی نداری، «ندارم» بنویس.", required: true }
+      ]
+    };
+    if (key === "focus") return {
+      badge: "برای ساخت برنامه یک‌تمرکزی",
+      title: "هدف این چرخه رو ببندیم تا برنامه واقعاً قابل اجرا باشه.",
+      subtitle: "فقط نتیجه‌ای که می‌خواهی و زمانی که امروز داری لازم است.",
+      fields: [
+        { key: "outcome", type: "input", label: "تا پایان این چرخه چه نتیجه مشخصی می‌خواهی؟", placeholder: cycle && cycle.metric && cycle.metric.metric || "مثلاً ۵ سفارش یا ۱۰ دایرکت مرتبط", required: true },
+        { key: "available_time", type: "select", label: "امروز چقدر زمان واقعی داری؟", required: true, options: [["30", "حدود ۳۰ دقیقه"], ["60", "حدود ۱ ساعت"], ["120", "حدود ۲ ساعت"]] }
+      ]
+    };
+    return {
+      badge: "برای ساخت پیشنهاد فروش",
+      title: "سه جزئیات کوتاه؛ بعد خروجی مستقیم آماده اجراست.",
+      subtitle: "هرچه این سه مورد واقعی‌تر باشند، متن کمتر شبیه خروجی عمومی AI می‌شود.",
+      fields: [
+        { key: "subject", type: "input", label: "این پیشنهاد دقیقاً برای کدام محصول یا خدمت است؟", placeholder: "مثلاً کیف چرمی مدل X", value: offer, required: true },
+        { key: "audience", type: "input", label: "مخاطب اصلی این پیشنهاد کیست و چه نتیجه‌ای می‌خواهد؟", placeholder: "مثلاً خانم‌های شاغل که کیف سبک و رسمی می‌خواهند", required: true },
+        { key: "cta", type: "select", label: "CTA نهایی کجا باشد؟", required: true, options: [["dm", "دایرکت"], ["website", "لینک سایت"], ["whatsapp", "واتساپ"]] }
+      ]
+    };
+  }
+
+  function fieldHtml(field, saved) {
+    var value = saved && saved[field.key] != null ? String(saved[field.key]) : String(field.value || "");
+    var required = field.required ? " required" : "";
+    if (field.type === "select") {
+      return '<div class="hx-context-field"><label for="hx-context-' + esc(field.key) + '">' + esc(field.label) + '</label><select class="hx-context-select" id="hx-context-' + esc(field.key) + '" data-context-key="' + esc(field.key) + '"' + required + '><option value="">انتخاب کن</option>' + (field.options || []).map(function (option) { return '<option value="' + esc(option[0]) + '"' + (value === option[0] ? ' selected' : '') + '>' + esc(option[1]) + '</option>'; }).join("") + '</select>' + (field.hint ? '<small>' + esc(field.hint) + '</small>' : '') + '</div>';
+    }
+    if (field.type === "textarea") {
+      return '<div class="hx-context-field"><label for="hx-context-' + esc(field.key) + '">' + esc(field.label) + '</label><textarea class="hx-context-textarea" id="hx-context-' + esc(field.key) + '" data-context-key="' + esc(field.key) + '" maxlength="360" placeholder="' + esc(field.placeholder || "") + '"' + required + '>' + esc(value) + '</textarea>' + (field.hint ? '<small>' + esc(field.hint) + '</small>' : '') + '</div>';
+    }
+    return '<div class="hx-context-field"><label for="hx-context-' + esc(field.key) + '">' + esc(field.label) + '</label><input class="hx-context-input" id="hx-context-' + esc(field.key) + '" data-context-key="' + esc(field.key) + '" maxlength="220" value="' + esc(value) + '" placeholder="' + esc(field.placeholder || "") + '"' + required + '>' + (field.hint ? '<small>' + esc(field.hint) + '</small>' : '') + '</div>';
+  }
+
+  function renderContext(journey, cycle) {
+    var target = document.getElementById("execution-content");
+    if (!target || !cycle) return false;
+    var schema = contextSchema(cycle.diagnosisKey, journey, cycle);
+    var saved = cycle.executionContext || {};
+    target.innerHTML = [
+      '<div class="hx-execution-context-step">',
+        '<span class="hx-context-badge">' + esc(schema.badge) + '</span>',
+        '<h2 id="execution-title">' + esc(schema.title) + '</h2>',
+        '<p>' + esc(schema.subtitle) + '</p>',
+        '<form class="hx-execution-context-form" id="execution-context-form">',
+          schema.fields.map(function (field) { return fieldHtml(field, saved); }).join(""),
+          '<p class="hx-context-error" id="execution-context-error" role="alert"></p>',
+          '<div class="hx-context-actions"><button class="hx-primary" type="submit">ساخت خروجی آماده ←</button><button class="hx-back" type="button" data-execution-action="journey">بازگشت به مسیر</button></div>',
+        '</form>',
+      '</div>'
+    ].join("");
+    if (window.hxTrack) window.hxTrack("execution_context_viewed", { diagnosis_key: cycle.diagnosisKey, field_count: schema.fields.length });
+    return true;
+  }
+
+  function collectContext() {
+    var form = document.getElementById("execution-context-form");
+    if (!form) return null;
+    var values = {};
+    var invalid = null;
+    form.querySelectorAll("[data-context-key]").forEach(function (field) {
+      var value = String(field.value || "").trim();
+      values[field.getAttribute("data-context-key")] = value;
+      if (!invalid && field.required && value.length < 2) invalid = field;
+    });
+    if (invalid) {
+      var error = document.getElementById("execution-context-error");
+      if (error) error.textContent = "این جزئیات برای شخصی‌سازی خروجی لازم است.";
+      invalid.focus();
+      return null;
+    }
+    return values;
+  }
+
   function renderLoading(cycle) {
     var target = document.getElementById("execution-content");
     if (!target) return;
@@ -94,9 +185,9 @@
       '<div class="hx-execution-loading">',
         '<div class="hx-execution-pulse" aria-hidden="true"><span></span></div>',
         '<p class="hx-kicker">Execution Assistant</p>',
-        '<h2 id="execution-title">دارم کار رو برات آماده می‌کنم.</h2>',
+        '<h2 id="execution-title">دارم نسخه اجرایی رو می‌سازم.</h2>',
         '<p>بر اساس همین اقدام: <strong>' + esc(cycle && cycle.action && cycle.action.title || "کار فعلی") + '</strong></p>',
-        '<small>فقط یک خروجی آماده‌ی اجرا؛ بدون لیست اضافه.</small>',
+        '<small>فقط یک خروجی نهایی؛ بر اساس جزئیاتی که همین الان دادی.</small>',
       '</div>'
     ].join("");
   }
@@ -108,7 +199,7 @@
     var executed = Boolean(execution.executedAt);
     target.innerHTML = [
       '<div class="hx-execution-head">',
-        '<div><p class="hx-kicker">Execution Assistant · قدم ' + esc(journey.cycles.length) + '</p><h2 id="execution-title">' + esc(execution.execution_title || "خروجی آماده") + '</h2><p>هوشکس این بخش از کار را آماده کرده؛ تو فقط اجرا و نتیجه را ثبت کن.</p></div>',
+        '<div><p class="hx-kicker">Execution Assistant · قدم ' + esc(journey.cycles.length) + '</p><h2 id="execution-title">' + esc(execution.execution_title || "خروجی آماده") + '</h2><p>این خروجی از اطلاعات همین کسب‌وکار و Context همین اقدام ساخته شده.</p></div>',
         '<span class="hx-execution-ready">' + (executed ? 'اجرا ثبت شد' : 'آماده اجرا') + '</span>',
       '</div>',
       '<div class="hx-execution-context"><span>کار فعلی</span><strong>' + esc(cycle.action && cycle.action.title || "") + '</strong></div>',
@@ -127,8 +218,9 @@
     return true;
   }
 
-  function saveExecution(journey, cycle, result, source) {
+  function saveExecution(journey, cycle, result, source, context) {
     var days = Math.max(1, Math.min(7, Number(result.check_in_days) || 2));
+    cycle.executionContext = context || cycle.executionContext || {};
     cycle.execution = {
       execution_title: String(result.execution_title || "خروجی آماده"),
       execution_type: String(result.execution_type || "offer_copy"),
@@ -137,41 +229,73 @@
       check_in_days: days,
       checkInAt: "",
       createdAt: now(),
-      source: source || "api"
+      source: source || "api",
+      context: cycle.executionContext
     };
     cycle.updatedAt = now();
     writeJourney(journey);
-    if (window.hxTrack) window.hxTrack("execution_generated", { diagnosis_key: cycle.diagnosisKey, execution_type: cycle.execution.execution_type, source: cycle.execution.source, check_in_days: days });
+    if (window.hxTrack) window.hxTrack("execution_generated", { diagnosis_key: cycle.diagnosisKey, execution_type: cycle.execution.execution_type, source: cycle.execution.source, check_in_days: days, context_fields: Object.keys(cycle.executionContext).length });
     return cycle.execution;
   }
 
-  function localExecution(cycle, journey) {
+  function ctaLine(value) {
+    if (value === "website") return "برای دیدن جزئیات، روی لینک سایت بزن.";
+    if (value === "whatsapp") return "برای ادامه، همین الان در واتساپ پیام بده.";
+    return "برای ادامه، یک پیام دایرکت بفرست.";
+  }
+
+  function localExecution(cycle, journey, context) {
     var key = cycle && cycle.diagnosisKey || "offer";
     var business = journey && journey.profile && journey.profile.businessName || "کسب‌وکار";
     var offer = journey && journey.profile && journey.profile.offer || "محصول یا خدمت اصلی";
-    if (key === "acquisition") return { execution_title: "متن جذب آماده انتشار", execution_type: "content_cta", artifact: "هوک:\nاگر این روزها برای «" + offer + "» مخاطب درست پیدا نمی‌کنی، اول درد اصلی را واضح‌تر بگو.\n\nمتن:\nدر " + business + " می‌خواهیم دقیق بفهمیم کجای مسیر برای تو سخت شده. اگر همین مسئله را داری، یک کلمه بفرست تا دقیق‌تر راهنمایی‌ات کنیم.\n\nCTA:\nکلمه «راهنما» را دایرکت کن.", usage_hint: "همین متن را با یک تصویر یا ویدیوی ساده منتشر کن و CTA را تغییر نده.", check_in_days: 3 };
-    if (key === "sales_process") return { execution_title: "پاسخ آماده برای تردید خرید", execution_type: "sales_reply", artifact: "کاملاً حق داری قبل از تصمیم مطمئن شوی. درباره «" + offer + "» مهم‌ترین نکته این است که ببینیم واقعاً برای نیاز تو مناسب است یا نه.\n\nاگر بگویی اصلی‌ترین تردیدت چیست، دقیق و کوتاه جواب می‌دهم؛ اگر مناسب تو نباشد هم صادقانه می‌گویم.\n\nهمان سؤالی که جلوی خریدت را گرفته بفرست.", usage_hint: "این پاسخ را در اولین گفت‌وگوی واقعی با مشتری مردد استفاده کن.", check_in_days: 2 };
-    if (key === "focus") return { execution_title: "برنامه اجرایی یک‌تمرکزی", execution_type: "focus_plan", artifact: "هدف این چرخه:\n" + (cycle.priority && cycle.priority.title || "یک اولویت را جلو ببر") + "\n\nامروز:\n" + (cycle.action && cycle.action.title || "کار فعلی") + "\n\nفعلاً متوقف کن:\nهر کاری که مستقیم به همین هدف کمک نمی‌کند.\n\nتعریف انجام‌شدن:\nوقتی معیار تعیین‌شده را اندازه گرفتی، قبل از شروع کار بعدی نتیجه را ثبت کن.", usage_hint: "تا ثبت نتیجه، کار جدیدی به این چرخه اضافه نکن.", check_in_days: 1 };
-    return { execution_title: "پیشنهاد فروش آماده اجرا", execution_type: "offer_copy", artifact: "پیشنهاد اصلی:\n«" + offer + "» برای کسی است که می‌خواهد با یک مسیر روشن‌تر به نتیجه برسد، بدون سردرگمی بین چند انتخاب.\n\nاستوری ۱:\nاگر بین چند راه مختلف می‌چرخی، احتمالاً مشکل کمبود گزینه نیست؛ پیشنهاد واضح کم داری.\n\nاستوری ۲:\nدر " + business + "، «" + offer + "» را با یک نتیجه مشخص و قدم بعدی روشن ارائه می‌کنیم.\n\nاستوری ۳ / CTA:\nبرای شروع، کلمه «شروع» را دایرکت کن.", usage_hint: "این سه بخش را پشت‌سرهم منتشر کن و فقط همین CTA را نگه دار.", check_in_days: 2 };
+    context = context || {};
+
+    if (key === "acquisition") return {
+      execution_title: "متن جذب آماده انتشار",
+      execution_type: "content_cta",
+      artifact: "هوک:\nاگر «" + (context.pain || "این مشکل") + "» برات آشناست، قبل از انتخاب راه‌حل این نکته رو ببین.\n\nمتن:\nدر " + business + " برای «" + offer + "» روی همین مسئله تمرکز کردیم: " + (context.pain || "درد مشخص مخاطب") + ". هدف اینه که قبل از معرفی محصول، دقیقاً همون چیزی رو بگیم که مخاطب الان باهاش درگیره.\n\nCTA:\n" + ctaLine(context.cta),
+      usage_hint: "همین نسخه را با یک تصویر یا ویدیوی ساده منتشر کن و CTA را تغییر نده.",
+      check_in_days: 3
+    };
+
+    if (key === "sales_process") return {
+      execution_title: "پاسخ آماده برای تردید خرید",
+      execution_type: "sales_reply",
+      artifact: "کاملاً قابل درکه که قبل از تصمیم درباره «" + (context.objection || "این موضوع") + "» مطمئن بشی.\n\nچیزی که می‌تونم شفاف بگم اینه: " + (context.proof || "اطلاعات واقعی محصول را دقیق می‌گیم") + ".\n\nاگر بخوای، بر اساس نیاز خودت می‌گم «" + offer + "» واقعاً انتخاب مناسبی هست یا نه.\n\nاگر موافقی، بگو مهم‌ترین چیزی که هنوز باید بدونی چیه؟",
+      usage_hint: "این پاسخ را در اولین گفت‌وگوی واقعی مرتبط استفاده کن.",
+      check_in_days: 2
+    };
+
+    if (key === "focus") return {
+      execution_title: "برنامه اجرایی یک‌تمرکزی",
+      execution_type: "focus_plan",
+      artifact: "نتیجه این چرخه:\n" + (context.outcome || cycle.metric && cycle.metric.metric || "یک نتیجه مشخص") + "\n\nزمان واقعی امروز:\n" + (context.available_time || "60") + " دقیقه\n\nکار اصلی:\n" + (cycle.action && cycle.action.title || "کار فعلی") + "\n\nفعلاً متوقف کن:\nهر کاری که مستقیم به همین نتیجه کمک نمی‌کند.\n\nتعریف انجام‌شدن:\nاقدام انجام شده و عدد نتیجه ثبت شده باشد.",
+      usage_hint: "تا ثبت نتیجه، کار جدیدی به این چرخه اضافه نکن.",
+      check_in_days: 1
+    };
+
+    var subject = context.subject || offer;
+    return {
+      execution_title: "پیشنهاد فروش آماده اجرا",
+      execution_type: "offer_copy",
+      artifact: "پیشنهاد اصلی:\n«" + subject + "» برای " + (context.audience || "مخاطب اصلی این پیشنهاد") + " ساخته شده؛ با یک انتخاب روشن و قدم بعدی مشخص.\n\nاستوری ۱:\nاگر نتیجه‌ای که می‌خوای مشخصه ولی بین گزینه‌ها گیر کردی، اول باید انتخاب مناسب نیاز خودت رو پیدا کنی.\n\nاستوری ۲:\nدر " + business + "، «" + subject + "» را برای همین نیاز ارائه می‌کنیم.\n\nاستوری ۳ / CTA:\n" + ctaLine(context.cta),
+      usage_hint: "این سه بخش را پشت‌سرهم منتشر کن و CTA را ثابت نگه دار.",
+      check_in_days: 2
+    };
   }
 
-  async function prepareExecution() {
+  async function generateExecution(context) {
     if (preparing) return;
     var journey = readJourney();
     var cycle = currentCycle(journey);
-    if (!journey || !cycle) {
-      if (window.hxShowToast) window.hxShowToast("اول یک مسیر فعال بساز.");
-      return;
-    }
-    if (cycle.execution && cycle.execution.artifact) {
-      renderExecution(journey, cycle);
-      showOnly("execution");
-      return;
-    }
+    if (!journey || !cycle) return;
 
     preparing = true;
+    cycle.executionContext = context || {};
+    writeJourney(journey);
     renderLoading(cycle);
     showOnly("execution");
+    if (window.hxTrack) window.hxTrack("execution_context_submitted", { diagnosis_key: cycle.diagnosisKey, context_fields: Object.keys(context || {}).length });
     if (window.hxTrack) window.hxTrack("execution_requested", { diagnosis_key: cycle.diagnosisKey, cycle: journey.cycles.length });
 
     var payload = {
@@ -180,6 +304,7 @@
       profile: journey.profile || {},
       answers: journey.answers || {},
       diagnosisKey: cycle.diagnosisKey,
+      executionContext: context || {},
       currentPlan: { summary: cycle.summary || "", priority: cycle.priority || {}, action: cycle.action || {}, metric: cycle.metric || {} }
     };
 
@@ -190,22 +315,36 @@
       window.clearTimeout(timer);
       var data = await response.json();
       if (!response.ok || !data.execution) throw new Error(data.error || "execution_failed");
-      saveExecution(journey, cycle, data.execution, data.source || "api");
+      saveExecution(journey, cycle, data.execution, data.source || "api", context);
     } catch (error) {
-      saveExecution(journey, cycle, localExecution(cycle, journey), "local-fallback");
-      if (window.hxShowToast) window.hxShowToast("اتصال هوشمند قطع شد؛ نسخه اجرایی اولیه آماده است.");
+      saveExecution(journey, cycle, localExecution(cycle, journey, context), "local-fallback", context);
+      if (window.hxShowToast) window.hxShowToast("اتصال هوشمند قطع شد؛ نسخه اجرایی شخصی‌سازی‌شده اولیه آماده است.");
     } finally {
       preparing = false;
     }
 
+    journey = readJourney();
+    cycle = currentCycle(journey);
     renderExecution(journey, cycle);
-    injectEverywhere();
+    injectJourney();
+  }
+
+  function openContext() {
+    var journey = readJourney();
+    var cycle = currentCycle(journey);
+    if (!journey || !cycle) {
+      if (window.hxShowToast) window.hxShowToast("اول یک مسیر فعال بساز.");
+      return;
+    }
+    if (cycle.execution && cycle.execution.artifact) return openExisting();
+    renderContext(journey, cycle);
+    showOnly("execution");
   }
 
   function openExisting() {
     var journey = readJourney();
     var cycle = currentCycle(journey);
-    if (!journey || !cycle || !cycle.execution) return prepareExecution();
+    if (!journey || !cycle || !cycle.execution) return openContext();
     renderExecution(journey, cycle);
     showOnly("execution");
     if (window.hxTrack) window.hxTrack("execution_opened", { diagnosis_key: cycle.diagnosisKey, execution_type: cycle.execution.execution_type });
@@ -220,9 +359,7 @@
       writeJourney(journey);
       if (window.hxTrack) window.hxTrack("execution_copied", { diagnosis_key: cycle.diagnosisKey, execution_type: cycle.execution.execution_type });
       if (window.hxShowToast) window.hxShowToast("خروجی کپی شد");
-    }).catch(function () {
-      if (window.hxShowToast) window.hxShowToast("کپی انجام نشد");
-    });
+    }).catch(function () { if (window.hxShowToast) window.hxShowToast("کپی انجام نشد"); });
   }
 
   function markExecuted() {
@@ -237,8 +374,9 @@
     cycle = currentCycle(journey);
     if (window.hxTrack) window.hxTrack("execution_completed", { diagnosis_key: cycle.diagnosisKey, execution_type: cycle.execution.execution_type, check_in_at: cycle.execution.checkInAt });
     renderExecution(journey, cycle);
-    injectEverywhere();
-    if (window.hxShowToast) window.hxShowToast("اجرا ثبت شد؛ موعد بررسی نتیجه ذخیره شد.");
+    injectJourney();
+    if (window.hxCompletionRefresh) window.hxCompletionRefresh();
+    if (window.hxShowToast) window.hxShowToast("اجرا ثبت شد؛ حالا هوشکس منتظر نتیجه همین اقدام می‌ماند.");
   }
 
   function journeyCheckinHtml(cycle) {
@@ -251,35 +389,44 @@
     var cycle = currentCycle(journey);
     var plan = document.querySelector("#screen-journey .hx-current-plan");
     if (!plan || !cycle) return;
+    var signature = [cycle.id, cycle.status, Boolean(cycle.execution), cycle.execution && cycle.execution.executedAt, cycle.execution && cycle.execution.checkInAt].join("|");
+    if (plan.getAttribute("data-hx-execution-signature") === signature) return;
+    plan.setAttribute("data-hx-execution-signature", signature);
 
     var actions = plan.querySelector(".hx-plan-actions");
-    if (actions && !actions.querySelector("[data-execution-action]")) {
-      var button = document.createElement("button");
+    if (actions) {
+      var button = actions.querySelector("[data-execution-action]");
+      var desiredAction = cycle.execution ? "open" : "prepare";
+      var desiredText = cycle.execution ? "خروجی آماده رو ببین" : "این کار رو برام آماده کن ←";
+      if (!button) {
+        button = document.createElement("button");
+        button.type = "button";
+        actions.insertBefore(button, actions.firstChild);
+      }
       button.className = cycle.execution ? "hx-tool hx-execute-cta" : "hx-secondary hx-execute-cta";
-      button.type = "button";
-      button.setAttribute("data-execution-action", cycle.execution ? "open" : "prepare");
-      button.textContent = cycle.execution ? "خروجی آماده رو ببین" : "این کار رو برام آماده کن ←";
-      actions.insertBefore(button, actions.firstChild);
+      button.setAttribute("data-execution-action", desiredAction);
+      if (button.textContent !== desiredText) button.textContent = desiredText;
     }
 
     var existing = plan.querySelector("[data-hx-execution-status]");
-    if (cycle.execution && !existing) {
-      var status = document.createElement("div");
-      status.setAttribute("data-hx-execution-status", "true");
-      status.innerHTML = journeyCheckinHtml(cycle);
-      var metric = plan.querySelector(".hx-plan-metric");
-      if (metric) metric.insertAdjacentElement("afterend", status);
-    } else if (cycle.execution && existing) {
-      existing.innerHTML = journeyCheckinHtml(cycle);
-    }
+    if (cycle.execution) {
+      if (!existing) {
+        existing = document.createElement("div");
+        existing.setAttribute("data-hx-execution-status", "true");
+        var metric = plan.querySelector(".hx-plan-metric");
+        if (metric) metric.insertAdjacentElement("afterend", existing);
+      }
+      var statusHtml = journeyCheckinHtml(cycle);
+      if (existing && existing.innerHTML !== statusHtml) existing.innerHTML = statusHtml;
+    } else if (existing) existing.remove();
   }
 
   function injectResult() {
     if (window.hxCurrentResultKind !== "diagnosis") return;
     var journey = readJourney();
     var cycle = currentCycle(journey);
-    var card = document.querySelector("#result-content .hx-result-card.hx-action");
-    if (!card || !cycle || card.querySelector("[data-execution-action]")) return;
+    var card = document.querySelector("#result-content .hx-decision-action, #result-content .hx-result-card.hx-action");
+    if (!card || !cycle || document.querySelector("#result-content [data-execution-action]")) return;
     var button = document.createElement("button");
     button.type = "button";
     button.className = "hx-secondary hx-result-execute";
@@ -288,17 +435,19 @@
     card.appendChild(button);
   }
 
-  function injectEverywhere() {
-    injectJourney();
-    injectResult();
-  }
-
   function bind() {
+    document.addEventListener("submit", function (event) {
+      if (!event.target || event.target.id !== "execution-context-form") return;
+      event.preventDefault();
+      var context = collectContext();
+      if (context) generateExecution(context);
+    }, true);
+
     document.addEventListener("click", function (event) {
       var target = event.target.closest && event.target.closest("[data-execution-action]");
       if (!target) return;
       var action = target.getAttribute("data-execution-action");
-      if (action === "prepare") prepareExecution();
+      if (action === "prepare") openContext();
       if (action === "open") openExisting();
       if (action === "copy") markCopied();
       if (action === "executed") markExecuted();
@@ -312,13 +461,19 @@
   function init() {
     installScreen();
     bind();
-    injectEverywhere();
+    injectJourney();
+    injectResult();
     if (window.MutationObserver) {
-      new MutationObserver(function () { window.setTimeout(injectEverywhere, 20); }).observe(document.body, { childList: true, subtree: true });
+      var queued = false;
+      new MutationObserver(function () {
+        if (queued) return;
+        queued = true;
+        window.setTimeout(function () { queued = false; injectJourney(); injectResult(); }, 25);
+      }).observe(document.body, { childList: true, subtree: true });
     }
   }
 
-  window.hxExecutionPrepare = prepareExecution;
+  window.hxExecutionPrepare = openContext;
   window.hxExecutionOpen = openExisting;
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
