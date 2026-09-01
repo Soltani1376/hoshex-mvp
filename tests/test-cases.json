@@ -2,49 +2,55 @@
   {
     "id": "instagram-high-views-low-sales",
     "profile": { "businessName": "فروشگاه نمونه", "offer": "لباس کودک" },
-    "answers": {
-      "sales_channel": "instagram",
-      "main_problem": "low_conversion",
-      "sales_trend": "stable",
-      "current_focus": "content",
-      "last_growth_action": "هر روز ریلز منتشر کردم اما پیشنهاد مشخصی نداشتم."
-    },
-    "expect": { "main_problem_contains": "پیشنهاد فروش", "today_action_contains": "پیشنهاد" }
+    "answers": { "sales_channel": "instagram", "main_problem": "low_conversion", "sales_trend": "stable", "current_focus": "content", "last_growth_action": "هر روز ریلز منتشر کردم اما پیشنهاد مشخصی نداشتم." },
+    "expect": { "diagnosis_key": "offer", "main_problem_contains": "پیشنهاد فروش", "today_action_contains": "پیشنهاد", "overrides_self_report": false }
   },
   {
     "id": "business-no-leads",
     "profile": { "businessName": "خدمات نمونه", "offer": "خدمات طراحی سایت" },
-    "answers": {
-      "sales_channel": "website",
-      "main_problem": "no_leads",
-      "sales_trend": "decreased",
-      "current_focus": "ads",
-      "last_growth_action": "یک تبلیغ اجرا کردم ولی پیام مرتبط نگرفتم."
-    },
-    "expect": { "main_problem_contains": "ورودی مشتری", "today_action_contains": "جذب مشتری" }
+    "answers": { "sales_channel": "website", "main_problem": "no_leads", "sales_trend": "decreased", "current_focus": "ads", "last_growth_action": "یک تبلیغ اجرا کردم ولی پیام مرتبط نگرفتم." },
+    "expect": { "diagnosis_key": "acquisition", "main_problem_contains": "ورودی مشتری", "today_action_contains": "جذب مشتری", "overrides_self_report": false }
   },
   {
     "id": "store-people-dont-buy",
     "profile": { "businessName": "مغازه نمونه", "offer": "لوازم جانبی موبایل" },
-    "answers": {
-      "sales_channel": "store",
-      "main_problem": "sales_process",
-      "sales_trend": "decreased",
-      "current_focus": "sales",
-      "last_growth_action": "به مشتری‌ها تخفیف دادم اما هنوز مردد بودند."
-    },
-    "expect": { "main_problem_contains": "فرآیند تبدیل", "today_action_contains": "اعتراض" }
+    "answers": { "sales_channel": "store", "main_problem": "sales_process", "sales_trend": "decreased", "current_focus": "sales", "last_growth_action": "به مشتری‌ها تخفیف دادم اما هنوز مردد بودند." },
+    "expect": { "diagnosis_key": "sales_process", "main_problem_contains": "فرآیند تبدیل", "today_action_contains": "اعتراض", "overrides_self_report": false }
   },
   {
     "id": "owner-needs-focus",
     "profile": { "businessName": "برند نمونه", "offer": "محصول دست‌ساز" },
-    "answers": {
-      "sales_channel": "multi_channel",
-      "main_problem": "no_focus",
-      "sales_trend": "stable",
-      "current_focus": "product",
-      "last_growth_action": "هم‌زمان سایت، پیج و چند محصول تازه را جلو بردم."
-    },
-    "expect": { "main_problem_contains": "اولویت", "today_action_contains": "هفت‌روزه" }
+    "answers": { "sales_channel": "multi_channel", "main_problem": "no_focus", "sales_trend": "stable", "current_focus": "product", "last_growth_action": "هم‌زمان سایت، پیج و چند محصول تازه را جلو بردم." },
+    "expect": { "diagnosis_key": "focus", "main_problem_contains": "اولویت", "today_action_contains": "هفت‌روزه", "overrides_self_report": false }
+  },
+  {
+    "id": "contradiction-says-no-leads-but-many-buyers-stall",
+    "profile": { "businessName": "فروشگاه تست", "offer": "کیف زنانه" },
+    "answers": { "sales_channel": "instagram", "main_problem": "no_leads", "sales_trend": "decreased", "current_focus": "sales", "last_growth_action": "روزانه حدود ۵۰ نفر دایرکت میدن و قیمت می‌پرسن ولی خیلی‌ها مردد میشن و خرید نمی‌کنن." },
+    "expect": { "diagnosis_key": "sales_process", "main_problem_contains": "فرآیند تبدیل", "today_action_contains": "اعتراض", "overrides_self_report": true }
+  },
+  {
+    "id": "contradiction-says-conversion-but-has-zero-traffic",
+    "profile": { "businessName": "شروع تازه", "offer": "شمع دست‌ساز" },
+    "answers": { "sales_channel": "instagram", "main_problem": "low_conversion", "sales_trend": "new", "current_focus": "content", "last_growth_action": "تازه شروع کردم و هنوز هیچ بازدید و هیچ پیام یا مشتری ندارم." },
+    "expect": { "diagnosis_key": "acquisition", "main_problem_contains": "ورودی مشتری", "today_action_contains": "جذب مشتری", "overrides_self_report": true }
+  },
+  {
+    "id": "contradiction-says-focus-but-sales-objections-dominate",
+    "profile": { "businessName": "کلینیک نمونه", "offer": "خدمات زیبایی" },
+    "answers": { "sales_channel": "instagram", "main_problem": "no_focus", "sales_trend": "decreased", "current_focus": "sales", "last_growth_action": "مشتری زیاد پیام میده و قیمت می‌پرسه؛ تخفیف هم دادم ولی میگه گرونه و خرید نمی‌کنه." },
+    "expect": { "diagnosis_key": "sales_process", "main_problem_contains": "فرآیند تبدیل", "today_action_contains": "اعتراض", "overrides_self_report": true }
+  },
+  {
+    "id": "contradiction-says-sales-process-but-execution-is-scattered",
+    "profile": { "businessName": "برند چندمسیره", "offer": "اکسسوری" },
+    "answers": { "sales_channel": "multi_channel", "main_problem": "sales_process", "sales_trend": "stable", "current_focus": "product", "last_growth_action": "همزمان سایت و پیج و تبلیغ و سه محصول جدید رو شروع کردم و نمی‌دانم روی کدام تمرکز کنم." },
+    "expect": { "diagnosis_key": "focus", "main_problem_contains": "اولویت", "today_action_contains": "هفت‌روزه", "overrides_self_report": true }
+  },
+  {
+    "id": "traffic-with-clicks-but-no-purchase",
+    "profile": { "businessName": "سایت نمونه", "offer": "دوره آنلاین" },
+    "answers": { "sales_channel": "website", "main_problem": "low_conversion", "sales_trend": "stable", "current_focus": "content", "last_growth_action": "بازدید خوبه و روی صفحه فروش کلیک می‌گیرم ولی خرید خیلی کم شده و پیشنهاد واضحی ندارم." },
+    "expect": { "diagnosis_key": "offer", "main_problem_contains": "پیشنهاد فروش", "today_action_contains": "پیشنهاد", "overrides_self_report": false }
   }
 ]
