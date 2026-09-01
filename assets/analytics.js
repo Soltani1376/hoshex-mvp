@@ -196,5 +196,6 @@
   installBrandAssets();
   installDiagnosticHero();
   appendScript("/assets/hoshex-journey.js", "v2-persistent-journey");
+  appendScript("/assets/hoshex-journey-hook.js", "v2-persistent-journey-hook");
   hxTrack("page_view", { version: "v2", hero: "diagnostic-v3", journey: "persistent-v1" });
 })();
