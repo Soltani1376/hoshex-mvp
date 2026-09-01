@@ -4,6 +4,15 @@
   var STORAGE_KEY = "hx_events_v2";
   var MAX_EVENTS = 250;
 
+  function appendStylesheet(href, key) {
+    if (document.querySelector('link[data-hx-style="' + key + '"]')) return;
+    var link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = href;
+    link.setAttribute("data-hx-style", key);
+    document.head.appendChild(link);
+  }
+
   function installVisualTheme() {
     if (!document.querySelector('link[data-hx-font-preconnect="googleapis"]')) {
       var googleApis = document.createElement("link");
@@ -22,13 +31,8 @@
       document.head.appendChild(googleStatic);
     }
 
-    if (!document.querySelector('link[data-hx-theme="v2-neon"]')) {
-      var theme = document.createElement("link");
-      theme.rel = "stylesheet";
-      theme.href = "/assets/hoshex-neon-theme.css";
-      theme.setAttribute("data-hx-theme", "v2-neon");
-      document.head.appendChild(theme);
-    }
+    appendStylesheet("/assets/hoshex-neon-theme.css", "v2-neon");
+    appendStylesheet("/assets/hoshex-hero-v3.css", "v2-hero-diagnostic");
   }
 
   function installBrandAssets() {
@@ -59,6 +63,70 @@
       favicon.setAttribute("data-hx-favicon", "true");
       document.head.appendChild(favicon);
     }
+  }
+
+  function installDiagnosticHero() {
+    var hero = document.querySelector("#screen-landing .hx-hero");
+    if (!hero || hero.getAttribute("data-hx-hero") === "diagnostic-v3") return;
+
+    hero.setAttribute("data-hx-hero", "diagnostic-v3");
+    hero.innerHTML = [
+      '<div class="hx-hero-copy">',
+        '<div class="hx-ai-badge"><span class="hx-ai-badge-dot" aria-hidden="true"></span><span>HOSHEX AI · موتور تشخیص کسب‌وکار</span></div>',
+        '<p class="hx-eyebrow">از نشانه‌ها به یک تصمیم روشن</p>',
+        '<h1 id="hero-title">مشکل اصلی کسب‌وکارت رو <span class="hx-hero-line-emphasis">حدس نزن.</span><br><span class="hx-gradient-text">هوشکس پیداش می‌کنه.</span></h1>',
+        '<p class="hx-lead">۵ سؤال کوتاه، چند سیگنال واقعی و یک خروجی مشخص: مشکل اصلی، اولویت شماره ۱ و کاری که امروز باید انجام بدهی.</p>',
+        '<div class="hx-value-row" aria-label="مزیت‌های بررسی هوشکس">',
+          '<span class="hx-value-chip">۵ سؤال تشخیصی</span>',
+          '<span class="hx-value-chip">کمتر از ۲ دقیقه</span>',
+          '<span class="hx-value-chip">فقط یک اولویت</span>',
+        '</div>',
+        '<div class="hx-hero-actions">',
+          '<button class="hx-primary" type="button" data-action="start">شروع تشخیص رایگان <span class="hx-cta-arrow" aria-hidden="true">←</span></button>',
+          '<button class="hx-secondary" type="button" data-action="show-demo">نمونه تشخیص را ببین</button>',
+        '</div>',
+        '<p class="hx-microcopy">بدون چت طولانی، بدون توصیه‌های کلی، بدون لیست ۲۰تایی کار.</p>',
+      '</div>',
+      '<div class="hx-hero-visual hx-diagnostic-stage" aria-hidden="true">',
+        '<div class="hx-stage-grid"></div>',
+        '<div class="hx-stage-axis-x"></div>',
+        '<div class="hx-stage-axis-y"></div>',
+        '<div class="hx-visual-halo"></div>',
+        '<div class="hx-stage-core">',
+          '<div class="hx-stage-radar"></div>',
+          '<div class="hx-stage-sweep"></div>',
+          '<div class="hx-agent"><div class="hx-orb"></div><div class="hx-scan"></div></div>',
+        '</div>',
+        '<div class="hx-signal-node hx-node-acquisition"><strong>ورودی مشتری</strong><span>سیگنال فعال</span></div>',
+        '<div class="hx-signal-node hx-node-offer"><strong>پیشنهاد فروش</strong><span>در حال سنجش</span></div>',
+        '<div class="hx-signal-node hx-node-sales"><strong>فرآیند فروش</strong><span>الگوی تبدیل</span></div>',
+        '<div class="hx-signal-node hx-node-focus"><strong>تمرکز اجرایی</strong><span>اولویت‌سنجی</span></div>',
+        '<div class="hx-engine-card">',
+          '<div class="hx-engine-head"><span>DIAGNOSIS ENGINE</span><span class="hx-engine-status">LIVE</span></div>',
+          '<div class="hx-engine-row"><span>سیگنال‌ها</span><b>۵ / ۵</b></div>',
+          '<div class="hx-engine-row"><span>فرضیه اصلی</span><b>در حال رتبه‌بندی</b></div>',
+          '<div class="hx-engine-meter"><span></span></div>',
+        '</div>',
+        '<div class="hx-preview">',
+          '<p class="hx-preview-label"><span>نمونه خروجی</span><span class="hx-preview-confidence">اطمینان بالا</span></p>',
+          '<span class="hx-diagnosis-tag">مشکل اصلی</span>',
+          '<p class="hx-preview-title">بازدید هست، اما پیشنهاد خرید هنوز واضح نیست.</p>',
+          '<div class="hx-preview-action"><span>۱</span> Priority 01: پیشنهاد فروش را بازنویسی کن</div>',
+        '</div>',
+      '</div>'
+    ].join("");
+
+    var notes = document.querySelector("#screen-landing .hx-section-note");
+    if (notes) {
+      notes.innerHTML = [
+        '<div class="hx-note"><span class="hx-note-step">01</span><strong>نشانه‌ها را می‌گیرد</strong>فقط اطلاعاتی که برای تصمیم لازم است.</div>',
+        '<div class="hx-note"><span class="hx-note-step">02</span><strong>مشکل را رتبه‌بندی می‌کند</strong>یک مانع اصلی، نه چند توصیه هم‌زمان.</div>',
+        '<div class="hx-note"><span class="hx-note-step">03</span><strong>کار امروز را می‌دهد</strong>یک اقدام مشخص که همان روز قابل اجراست.</div>'
+      ].join("");
+    }
+
+    var livePill = document.querySelector(".hx-live-pill");
+    if (livePill) livePill.lastChild.textContent = " تشخیص هوشمند · رایگان";
   }
 
   function clean(value, depth) {
@@ -103,8 +171,6 @@
 
     window.dispatchEvent(new CustomEvent("hx:analytics", { detail: payload }));
 
-    // A server endpoint is intentionally optional until a persistent analytics store is added.
-    // Set window.HX_ANALYTICS_ENDPOINT to enable it without changing the flow code.
     if (window.HX_ANALYTICS_ENDPOINT && navigator.sendBeacon) {
       try {
         navigator.sendBeacon(window.HX_ANALYTICS_ENDPOINT, JSON.stringify(payload));
@@ -118,5 +184,6 @@
   window.hxGetEvents = readEvents;
   installVisualTheme();
   installBrandAssets();
-  hxTrack("page_view", { version: "v2" });
+  installDiagnosticHero();
+  hxTrack("page_view", { version: "v2", hero: "diagnostic-v3" });
 })();
