@@ -98,7 +98,7 @@
     };
     if (key === "sales_process") return {
       badge: "برای ساخت پاسخ فروش",
-      title: "اعتراض واقعی مشتری رو بده؛ نه حدس ما رو.",
+      title: "تردید واقعی مشتری رو بده؛ نه حدس ما رو.",
       subtitle: "با همین دو داده، پاسخ آماده‌ای می‌سازیم که بتوانی در گفت‌وگوی بعدی استفاده کنی.",
       fields: [
         { key: "objection", type: "textarea", label: "پرتکرارترین سؤال یا تردید مشتری چیست؟", placeholder: "مثلاً می‌گه گرونه / مطمئن نیست کیفیتش خوب باشه", required: true },
@@ -254,23 +254,23 @@
       execution_title: "متن جذب آماده انتشار",
       execution_type: "content_cta",
       artifact: "هوک:\nاگر «" + (context.pain || "این مشکل") + "» برات آشناست، قبل از انتخاب راه‌حل این نکته رو ببین.\n\nمتن:\nدر " + business + " برای «" + offer + "» روی همین مسئله تمرکز کردیم: " + (context.pain || "درد مشخص مخاطب") + ". هدف اینه که قبل از معرفی محصول، دقیقاً همون چیزی رو بگیم که مخاطب الان باهاش درگیره.\n\nCTA:\n" + ctaLine(context.cta),
-      usage_hint: "همین نسخه را با یک تصویر یا ویدیوی ساده منتشر کن و CTA را در این تست تغییر نده.",
+      usage_hint: "همین نسخه را با یک تصویر یا ویدیوی ساده منتشر کن و CTA را تغییر نده.",
       check_in_days: 3
     };
 
     if (key === "sales_process") return {
       execution_title: "پاسخ آماده برای تردید خرید",
       execution_type: "sales_reply",
-      artifact: "کاملاً قابل درکه که قبل از خرید درباره «" + (context.objection || "این موضوع") + "» مطمئن بشی.\n\nچیزی که می‌تونم شفاف بگم اینه: " + (context.proof || "اطلاعات واقعی محصول را دقیق می‌گیم") + ".\n\nاگر بخوای، بر اساس نیاز خودت می‌گم «" + offer + "» واقعاً انتخاب مناسبی هست یا نه؛ لازم نیست فقط برای خرید تصمیم بگیری.\n\nاگر موافقی، بگو مهم‌ترین چیزی که هنوز باید بدونی چیه؟",
-      usage_hint: "همین پاسخ را در اولین گفت‌وگوی مرتبط استفاده کن؛ جمله بعدی مشتری را برای Feedback نگه دار.",
+      artifact: "کاملاً قابل درکه که قبل از تصمیم درباره «" + (context.objection || "این موضوع") + "» مطمئن بشی.\n\nچیزی که می‌تونم شفاف بگم اینه: " + (context.proof || "اطلاعات واقعی محصول را دقیق می‌گیم") + ".\n\nاگر بخوای، بر اساس نیاز خودت می‌گم «" + offer + "» واقعاً انتخاب مناسبی هست یا نه.\n\nاگر موافقی، بگو مهم‌ترین چیزی که هنوز باید بدونی چیه؟",
+      usage_hint: "این پاسخ را در اولین گفت‌وگوی واقعی مرتبط استفاده کن.",
       check_in_days: 2
     };
 
     if (key === "focus") return {
       execution_title: "برنامه اجرایی یک‌تمرکزی",
       execution_type: "focus_plan",
-      artifact: "نتیجه این چرخه:\n" + (context.outcome || cycle.metric && cycle.metric.metric || "یک نتیجه مشخص") + "\n\nزمان واقعی امروز:\n" + (context.available_time || "60") + " دقیقه\n\nکار اصلی:\n" + (cycle.action && cycle.action.title || "کار فعلی") + "\n\nقانون این چرخه:\nتا وقتی این کار انجام نشده، کار تازه‌ای که مستقیم به همین نتیجه کمک نمی‌کند اضافه نکن.\n\nتعریف پایان:\nاقدام انجام شده و عدد نتیجه ثبت شده باشد.",
-      usage_hint: "این متن برنامه همین چرخه است؛ فقط همین یک نتیجه را تا Check-in دنبال کن.",
+      artifact: "نتیجه این چرخه:\n" + (context.outcome || cycle.metric && cycle.metric.metric || "یک نتیجه مشخص") + "\n\nزمان واقعی امروز:\n" + (context.available_time || "60") + " دقیقه\n\nکار اصلی:\n" + (cycle.action && cycle.action.title || "کار فعلی") + "\n\nفعلاً متوقف کن:\nهر کاری که مستقیم به همین نتیجه کمک نمی‌کند.\n\nتعریف انجام‌شدن:\nاقدام انجام شده و عدد نتیجه ثبت شده باشد.",
+      usage_hint: "تا ثبت نتیجه، کار جدیدی به این چرخه اضافه نکن.",
       check_in_days: 1
     };
 
@@ -278,8 +278,8 @@
     return {
       execution_title: "پیشنهاد فروش آماده اجرا",
       execution_type: "offer_copy",
-      artifact: "پیشنهاد اصلی:\n«" + subject + "» برای " + (context.audience || "مخاطبی که این نتیجه را می‌خواهد") + " طراحی شده؛ با یک انتخاب روشن و قدم بعدی مشخص.\n\nاستوری ۱:\nاگر نتیجه‌ای که می‌خوای مشخصه ولی بین گزینه‌ها گیر کردی، اول باید بفهمی کدوم انتخاب واقعاً برای نیاز تو ساخته شده.\n\nاستوری ۲:\nدر " + business + "، «" + subject + "» را برای همین نیاز ارائه می‌کنیم؛ بدون پیچیده‌کردن تصمیم.\n\nاستوری ۳ / CTA:\n" + ctaLine(context.cta),
-      usage_hint: "این سه بخش را پشت‌سرهم منتشر کن؛ موضوع، مخاطب و CTA را در این چرخه ثابت نگه دار.",
+      artifact: "پیشنهاد اصلی:\n«" + subject + "» برای " + (context.audience || "مخاطب اصلی این پیشنهاد") + " ساخته شده؛ با یک انتخاب روشن و قدم بعدی مشخص.\n\nاستوری ۱:\nاگر نتیجه‌ای که می‌خوای مشخصه ولی بین گزینه‌ها گیر کردی، اول باید انتخاب مناسب نیاز خودت رو پیدا کنی.\n\nاستوری ۲:\nدر " + business + "، «" + subject + "» را برای همین نیاز ارائه می‌کنیم.\n\nاستوری ۳ / CTA:\n" + ctaLine(context.cta),
+      usage_hint: "این سه بخش را پشت‌سرهم منتشر کن و CTA را ثابت نگه دار.",
       check_in_days: 2
     };
   }
@@ -389,26 +389,36 @@
     var cycle = currentCycle(journey);
     var plan = document.querySelector("#screen-journey .hx-current-plan");
     if (!plan || !cycle) return;
+    var signature = [cycle.id, cycle.status, Boolean(cycle.execution), cycle.execution && cycle.execution.executedAt, cycle.execution && cycle.execution.checkInAt].join("|");
+    if (plan.getAttribute("data-hx-execution-signature") === signature) return;
+    plan.setAttribute("data-hx-execution-signature", signature);
+
     var actions = plan.querySelector(".hx-plan-actions");
     if (actions) {
-      var old = actions.querySelector("[data-execution-action]");
-      if (old) old.remove();
-      var button = document.createElement("button");
+      var button = actions.querySelector("[data-execution-action]");
+      var desiredAction = cycle.execution ? "open" : "prepare";
+      var desiredText = cycle.execution ? "خروجی آماده رو ببین" : "این کار رو برام آماده کن ←";
+      if (!button) {
+        button = document.createElement("button");
+        button.type = "button";
+        actions.insertBefore(button, actions.firstChild);
+      }
       button.className = cycle.execution ? "hx-tool hx-execute-cta" : "hx-secondary hx-execute-cta";
-      button.type = "button";
-      button.setAttribute("data-execution-action", cycle.execution ? "open" : "prepare");
-      button.textContent = cycle.execution ? "خروجی آماده رو ببین" : "این کار رو برام آماده کن ←";
-      actions.insertBefore(button, actions.firstChild);
+      button.setAttribute("data-execution-action", desiredAction);
+      if (button.textContent !== desiredText) button.textContent = desiredText;
     }
 
     var existing = plan.querySelector("[data-hx-execution-status]");
-    if (cycle.execution && !existing) {
-      var status = document.createElement("div");
-      status.setAttribute("data-hx-execution-status", "true");
-      status.innerHTML = journeyCheckinHtml(cycle);
-      var metric = plan.querySelector(".hx-plan-metric");
-      if (metric) metric.insertAdjacentElement("afterend", status);
-    } else if (cycle.execution && existing) existing.innerHTML = journeyCheckinHtml(cycle);
+    if (cycle.execution) {
+      if (!existing) {
+        existing = document.createElement("div");
+        existing.setAttribute("data-hx-execution-status", "true");
+        var metric = plan.querySelector(".hx-plan-metric");
+        if (metric) metric.insertAdjacentElement("afterend", existing);
+      }
+      var statusHtml = journeyCheckinHtml(cycle);
+      if (existing && existing.innerHTML !== statusHtml) existing.innerHTML = statusHtml;
+    } else if (existing) existing.remove();
   }
 
   function injectResult() {
