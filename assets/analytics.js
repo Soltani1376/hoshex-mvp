@@ -4,6 +4,33 @@
   var STORAGE_KEY = "hx_events_v2";
   var MAX_EVENTS = 250;
 
+  function installVisualTheme() {
+    if (!document.querySelector('link[data-hx-font-preconnect="googleapis"]')) {
+      var googleApis = document.createElement("link");
+      googleApis.rel = "preconnect";
+      googleApis.href = "https://fonts.googleapis.com";
+      googleApis.setAttribute("data-hx-font-preconnect", "googleapis");
+      document.head.appendChild(googleApis);
+    }
+
+    if (!document.querySelector('link[data-hx-font-preconnect="gstatic"]')) {
+      var googleStatic = document.createElement("link");
+      googleStatic.rel = "preconnect";
+      googleStatic.href = "https://fonts.gstatic.com";
+      googleStatic.crossOrigin = "anonymous";
+      googleStatic.setAttribute("data-hx-font-preconnect", "gstatic");
+      document.head.appendChild(googleStatic);
+    }
+
+    if (!document.querySelector('link[data-hx-theme="v2-neon"]')) {
+      var theme = document.createElement("link");
+      theme.rel = "stylesheet";
+      theme.href = "/assets/hoshex-neon-theme.css";
+      theme.setAttribute("data-hx-theme", "v2-neon");
+      document.head.appendChild(theme);
+    }
+  }
+
   function installBrandAssets() {
     var logoPath = "/assets/hoshex-logo-icon.png";
     var mark = document.querySelector(".hx-brand-mark");
@@ -89,6 +116,7 @@
 
   window.hxTrack = hxTrack;
   window.hxGetEvents = readEvents;
+  installVisualTheme();
   installBrandAssets();
   hxTrack("page_view", { version: "v2" });
 })();
