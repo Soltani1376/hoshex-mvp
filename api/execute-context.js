@@ -4,7 +4,7 @@ const CONTEXT_KEYS = ["pain", "cta", "objection", "proof", "outcome", "available
 
 function clean(value, fallback = "", max = 700) {
   if (typeof value !== "string") return fallback;
-  return value.replace(/[\u0000-\u001F\u007F]/g, "").trim().slice(0, max);
+  return value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "").trim().slice(0, max);
 }
 
 function bodyOf(body) {
