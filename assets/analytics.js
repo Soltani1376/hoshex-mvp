@@ -43,6 +43,7 @@
     appendStylesheet("/assets/hoshex-neon-theme.css", "v2-neon");
     appendStylesheet("/assets/hoshex-hero-v3.css", "v2-hero-diagnostic");
     appendStylesheet("/assets/hoshex-journey.css", "v2-persistent-journey");
+    appendStylesheet("/assets/hoshex-polish-v4.css", "v2-proportion-minimal-motion");
   }
 
   function installBrandAssets() {
