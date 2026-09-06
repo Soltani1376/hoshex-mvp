@@ -27,3 +27,5 @@ jobs:
         run: node tests/run-app-shell-tests.cjs
       - name: Run Hoshex Cloud tests
         run: node tests/run-cloud-tests.cjs
+      - name: Run prompt automation tests
+        run: node tests/run-prompt-automation-tests.mjs
